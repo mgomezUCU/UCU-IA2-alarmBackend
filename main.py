@@ -1,12 +1,16 @@
 import pysmile as ps
 from flask import Flask, request, jsonify
 import pysmile_license
+from flask_cors import CORS, cross_origin
 
 app = Flask(__name__)
 
 network = ps.Network()
 network.read_file("alarmTest.xdsl")
 network.update_beliefs()
+
+cors = CORS(app)
+app.config['CORS_HEADERS'] = 'Content-Type'
 
 
 @app.route("/ping")
@@ -30,6 +34,7 @@ def is_diagnosis(node):
 
 
 @app.route("/variables")
+@cross_origin()
 def variables():
     network.clear_all_evidence()
     network.update_beliefs()
@@ -52,6 +57,7 @@ def variables():
 
 
 @app.route("/diagnose", methods=['POST'])
+@cross_origin()
 def diagnose():
     network.clear_all_evidence()
     diseases = []
@@ -65,13 +71,13 @@ def diagnose():
     network.update_beliefs()
     nodes = network.get_all_nodes()
     for handle in nodes:
-        if is_diagnosis(handle):
-            disease_id = network.get_node_id(handle)
-            disease_name = network.get_node_name(handle)
-            posteriors = network.get_node_value(handle)
-            outcomes = [{"id": network.get_outcome_id(handle, i),
-                         "odds": float(round(posteriors[i], 2))} for i in range(len(posteriors))]
-            diseases.append({"id": disease_id, "name": disease_name, "outcomes": outcomes})
+        disease_id = network.get_node_id(handle)
+        disease_name = network.get_node_name(handle)
+        node_type = None
+        posteriors = network.get_node_value(handle)
+        outcomes = [{"id": network.get_outcome_id(handle, i),
+                    "odds": float(round(posteriors[i], 2))} for i in range(len(posteriors))]
+        diseases.append({"id": disease_id, "name": disease_name, "outcomes": outcomes, "type": node_type})
     return jsonify(diseases)
 
 
