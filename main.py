@@ -74,6 +74,8 @@ def diagnose():
         disease_id = network.get_node_id(handle)
         disease_name = network.get_node_name(handle)
         node_type = None
+        if network.get_node_user_properties(handle):
+            node_type = getattr(network.get_node_user_properties(handle)[0], 'value', None)
         posteriors = network.get_node_value(handle)
         outcomes = [{"id": network.get_outcome_id(handle, i),
                     "odds": float(round(posteriors[i], 2))} for i in range(len(posteriors))]
